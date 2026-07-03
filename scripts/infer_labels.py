@@ -1,5 +1,6 @@
 import warnings
 import logging
+import os
 from pathlib import Path
 from PIL import Image
 import numpy as np
@@ -15,6 +16,8 @@ clip.simple_tokenizer.SimpleTokenizer = lambda: clip.tokenize
 from ultralytics.models.sam import SAM3SemanticPredictor
 from tqdm import tqdm
 import queue
+
+os.environ.setdefault('PYTORCH_CUDA_ALLOC_CONF', 'expandable_segments:True')
 
 warnings.filterwarnings('ignore')
 logging.getLogger('ultralytics').setLevel(logging.ERROR)
@@ -51,7 +54,7 @@ def gpu_worker(gpu_id, image_paths, root_folder, output_root, progress_queue):
         task="segment",
         mode="predict",
         model=str(Path(__file__).parent.parent / "sam3.pt"),
-        half=False,
+        half=True,
         save=False,
         device=device,
         verbose=False,
@@ -103,16 +106,13 @@ def main():
 
     all_images = list(folder_path.rglob("*.[jp][pn]g"))
     total_imgs = len(all_images)
-    print(f"[Main] 总计找到 {total_imgs} 张图片，准备使用 2 个 GPU 处理...")
-
     if total_imgs == 0:
         return
 
-    # num_gpus = 2
     num_gpus = torch.cuda.device_count()
     if num_gpus == 0:
         raise RuntimeError("没有检测到 CUDA GPU，请先检查 PyTorch CUDA 环境")
-    print(f"[Main] 检测到 {num_gpus} 个 GPU")
+    print(f"[Main] 总计找到 {total_imgs} 张图片，使用 {num_gpus} 个 GPU 处理...")
 
     chunk_size = (total_imgs + num_gpus - 1) // num_gpus
     chunks = [all_images[i:i + chunk_size] for i in range(0, total_imgs, chunk_size)]
