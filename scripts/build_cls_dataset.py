@@ -9,10 +9,10 @@ from PIL import Image
 from tqdm import tqdm
 
 # ====== Paths ======
-DATASET_ROOT = Path("/home/sunlight/datasets")
-IMAGES_ROOT = DATASET_ROOT / "images" / "CoAGG_30fps"
-LABELS_ROOT = DATASET_ROOT / "sam3_label_clean" / "CoAGG_30fps"
-OUTPUT_DIR = Path("/home/sunlight/data/cls_dataset_v2/CoAGG_30fps")
+DATASET_ROOT = Path("/home/via/mai/datasets")
+IMAGES_ROOT = DATASET_ROOT / "images"
+LABELS_ROOT = DATASET_ROOT / "sam3_label"
+OUTPUT_DIR = Path("/home/via/mai/datasets/cls_dataset")
 
 # ====== Params ======
 TARGET_CLASSES = ['construction vehicle', 'truck', 'car', 'bus']
@@ -71,7 +71,14 @@ def prepare_object_image(image: Image.Image, mask: np.ndarray,
 def extract_objects(npz_path: Path) -> list | None:
     """Extract qualifying object images from one NPZ file."""
     rel = npz_path.relative_to(LABELS_ROOT)
-    img_path = IMAGES_ROOT / rel.parent / f"{npz_path.stem}.png"
+    img_path = None
+    for ext in (".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"):
+        candidate = IMAGES_ROOT / rel.parent / f"{npz_path.stem}{ext}"
+        if candidate.exists():
+            img_path = candidate
+            break
+    if img_path is None:
+        return None
     base_name = f"{rel.parent.name}_{rel.stem}"
 
     data = np.load(npz_path, allow_pickle=True)
