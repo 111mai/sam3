@@ -1,4 +1,13 @@
-"""Train vehicle classifier — self-contained, no project imports."""
+"""
+车辆分类器训练脚本
+==================
+功能：训练 ResNet101 分类器，用于区分不同车辆类型。
+- 输入：cls_dataset/ 目录（ImageFolder 结构，由 build_cls_dataset.py 生成）
+- 输出：checkpoints/best_model_cls.pth（最佳模型权重 + 类别名称）
+- 模型：ResNet101（ImageNet 预训练）+ Linear(2048, num_classes)
+- 数据划分：90% 训练 / 10% 验证（固定随机种子）
+- 优化策略：AdamW + CosineAnnealingLR，保存验证集准确率最高的模型
+"""
 
 import argparse
 import os
